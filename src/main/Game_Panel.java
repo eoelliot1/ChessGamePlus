@@ -28,6 +28,7 @@ public class Game_Panel extends JPanel implements Runnable {
     public static final int WHITE = 0;
     public static final int BLACK = 1;
     int currColour = WHITE;
+    int player1Region, player2Region;
 
     // Boolean conditions...
     boolean canMove;
@@ -37,7 +38,8 @@ public class Game_Panel extends JPanel implements Runnable {
 
     boolean staleMate = false;
 
-    public Game_Panel() {
+    public Game_Panel(int player1, int player2) {
+
         setBackground(Color.black);
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         addMouseMotionListener(mouse);
@@ -48,9 +50,12 @@ public class Game_Panel extends JPanel implements Runnable {
         In future, we can create different types of game formats relating to the stage.
          */
 
-        setUnitsClassic();
+
+        //setUnitsClassic(); // - Old version
+        setUnitsRegional(player1, player2);
         copyUnits(units, simUnits);
     }
+
 
 
 
@@ -630,12 +635,122 @@ Handles all the updates per turn.
     }
 
 
+    //1 = Classic, 2 = Coven
     public void startGame() {
         gameThread = new Thread(this);
+
         gameThread.start(); // So we create a thread and call the run method
 
     }
 
+    private void setUnitsRegional(int player1, int player2) {
+
+        //Set units for player1
+        switch (player1) {
+            case 1:
+                //Team White Classic
+                units.add(new Pawn(WHITE, 0,6));
+                units.add(new Pawn(WHITE, 1,6));
+                units.add(new Pawn(WHITE, 2,6));
+                units.add(new Pawn(WHITE, 3,6));
+                units.add(new Pawn(WHITE, 4,6));
+                units.add(new Pawn(WHITE, 5,6));
+                units.add(new Pawn(WHITE, 6,6));
+                units.add(new Pawn(WHITE, 7,6));
+
+                units.add(new Rook(WHITE, 0,7));
+                units.add(new Rook(WHITE, 7,7));
+
+                units.add(new Knight(WHITE, 1,7));
+                units.add(new Knight(WHITE, 6,7));
+
+                units.add(new Bishop(WHITE, 2,7));
+                units.add(new Bishop(WHITE, 5,7));
+
+                units.add(new Queen(WHITE, 3,7));
+
+                units.add(new King(WHITE, 4,7));
+            break;
+
+            case 2:
+                //Team White Coven
+                units.add(new Queen(WHITE, 0,6));
+                units.add(new Queen(WHITE, 1,6));
+                units.add(new Queen(WHITE, 2,6));
+                units.add(new Queen(WHITE, 3,6));
+                units.add(new Queen(WHITE, 4,6));
+                units.add(new Queen(WHITE, 5,6));
+                units.add(new Queen(WHITE, 6,6));
+                units.add(new Queen(WHITE, 7,6));
+
+                units.add(new Queen(WHITE, 0,7));
+                units.add(new Queen(WHITE, 7,7));
+
+                units.add(new Queen(WHITE, 1,7));
+                units.add(new Queen(WHITE, 6,7));
+
+                units.add(new Queen(WHITE, 2,7));
+                units.add(new Queen(WHITE, 5,7));
+
+                units.add(new Queen(WHITE, 3,7));
+
+                units.add(new King(WHITE, 4,7));
+
+        }
+
+        //Set Units for player2
+        switch (player2) {
+            case 1:
+                //Team Black Classic
+                units.add(new Pawn(BLACK, 0,1));
+                units.add(new Pawn(BLACK, 1,1));
+                units.add(new Pawn(BLACK, 2,1));
+                units.add(new Pawn(BLACK, 3,1));
+                units.add(new Pawn(BLACK, 4,1));
+                units.add(new Pawn(BLACK, 5,1));
+                units.add(new Pawn(BLACK, 6,1));
+                units.add(new Pawn(BLACK, 7,1));
+
+                units.add(new Rook(BLACK, 0,0));
+                units.add(new Rook(BLACK, 7,0));
+
+                units.add(new Knight(BLACK, 1,0));
+                units.add(new Knight(BLACK, 6,0));
+
+                units.add(new Bishop(BLACK, 2,0));
+                units.add(new Bishop(BLACK, 5,0));
+
+                units.add(new Queen(BLACK, 3,0));
+
+                units.add(new King(BLACK, 4,0));
+                break;
+
+            case 2:
+                //Team Black Coven
+                units.add(new Queen(BLACK, 0,1));
+                units.add(new Queen(BLACK, 1,1));
+                units.add(new Queen(BLACK, 2,1));
+                units.add(new Queen(BLACK, 3,1));
+                units.add(new Queen(BLACK, 4,1));
+                units.add(new Queen(BLACK, 5,1));
+                units.add(new Queen(BLACK, 6,1));
+                units.add(new Queen(BLACK, 7,1));
+
+                units.add(new Queen(BLACK, 0,0));
+                units.add(new Queen(BLACK, 7,0));
+
+                units.add(new Queen(BLACK, 1,0));
+                units.add(new Queen(BLACK, 6,0));
+
+                units.add(new Queen(BLACK, 2,0));
+                units.add(new Queen(BLACK, 5,0));
+
+                units.add(new Queen(BLACK, 3,0));
+
+                units.add(new King(BLACK, 4,0));
+
+        }
+    }
     public void setUnitsClassic() {
 
         //Test White Positions:

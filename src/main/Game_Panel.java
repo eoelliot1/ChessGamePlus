@@ -31,6 +31,7 @@ public class Game_Panel extends JPanel implements Runnable {
     int player1Region, player2Region;
 
     // Boolean conditions...
+    boolean infect = false;
     boolean canMove;
     boolean validSquare;
     boolean promotion;
@@ -99,12 +100,17 @@ Handles all the updates per turn.
 
                     if(validSquare) { //It's a valid position so update the position.
                         //Movement has been confirmed...
+                        System.out.println("URow: " + activeUnit.row + " UColumn: " + activeUnit.column);
+                        System.out.println("UPRow: " + activeUnit.pre_Row + " UPColumn: " + activeUnit.pre_Column);
+
 
                         copyUnits(simUnits, units); //If a piece has been removed then we apply to the backup list.
                         activeUnit.updatePosition();
+
                         if(castlingUnit != null) {
                             castlingUnit.updatePosition();
                         }
+
 
                         if (isKingInCheck() && isCheckmate()) {
                             gameOver = true; //GG
@@ -171,14 +177,24 @@ Handles all the updates per turn.
         activeUnit.column = activeUnit.getColumn(activeUnit.x);
         activeUnit.row = activeUnit.getRow(activeUnit.y);
 
+        //System.out.println("1Row: " + activeUnit.pre_Row + " 1Column: " + activeUnit.pre_Column);
+
         //If statemenent to check if movement is valid or not.
         if(activeUnit.canMove(activeUnit.column, activeUnit.row)) {
             canMove = true;
-
+            //System.out.println("2Row: " + activeUnit.pre_Row  + " 2Column: " + activeUnit.pre_Column);
 
             // Remove the unit that was hit from the list for simulation phase.
             if(activeUnit.hittingUnit != null) {
-                simUnits.remove(activeUnit.hittingUnit.getIndex());
+                    simUnits.remove(activeUnit.hittingUnit.getIndex());
+
+                //Infect the unit instead of simply removing it if it is infected.
+                if(isInfected(activeUnit) == true) {
+                    //Infect the unit instead of simply removing it if it is infected.
+                    int c = activeUnit.pre_Column;
+                    int r = activeUnit.pre_Row;
+                    simUnits.add(new Zombie(activeUnit.colour, c ,r));
+                }
             }
 
             checkCastling();
@@ -187,6 +203,18 @@ Handles all the updates per turn.
                 validSquare = true;
             }
         }
+    }
+
+    /*
+    Returns true if the unit is an infected type unit.
+     */
+    private boolean isInfected(Unit infected) {
+
+        if(infected.getClass() == Zombie.class) {
+            return true;
+        }
+
+        return false;
     }
 
     private boolean isIllegal(Unit protectedUnit) { //We use Unit instead of king so other units can use it.
@@ -674,14 +702,14 @@ Handles all the updates per turn.
 
             case 2:
                 //Team White Coven
-                units.add(new Queen(WHITE, 0,6));
-                units.add(new Queen(WHITE, 1,6));
-                units.add(new Queen(WHITE, 2,6));
-                units.add(new Queen(WHITE, 3,6));
-                units.add(new Queen(WHITE, 4,6));
-                units.add(new Queen(WHITE, 5,6));
-                units.add(new Queen(WHITE, 6,6));
-                units.add(new Queen(WHITE, 7,6));
+                units.add(new Zombie(WHITE, 0,6));
+                units.add(new Zombie(WHITE, 1,6));
+                units.add(new Zombie(WHITE, 2,6));
+                units.add(new Zombie(WHITE, 3,6));
+                units.add(new Zombie(WHITE, 4,6));
+                units.add(new Zombie(WHITE, 5,6));
+                units.add(new Zombie(WHITE, 6,6));
+                units.add(new Zombie(WHITE, 7,6));
 
                 units.add(new Queen(WHITE, 0,7));
                 units.add(new Queen(WHITE, 7,7));
@@ -727,14 +755,14 @@ Handles all the updates per turn.
 
             case 2:
                 //Team Black Coven
-                units.add(new Queen(BLACK, 0,1));
-                units.add(new Queen(BLACK, 1,1));
-                units.add(new Queen(BLACK, 2,1));
-                units.add(new Queen(BLACK, 3,1));
-                units.add(new Queen(BLACK, 4,1));
-                units.add(new Queen(BLACK, 5,1));
-                units.add(new Queen(BLACK, 6,1));
-                units.add(new Queen(BLACK, 7,1));
+                units.add(new Zombie(BLACK, 0,1));
+                units.add(new Zombie(BLACK, 1,1));
+                units.add(new Zombie(BLACK, 2,1));
+                units.add(new Zombie(BLACK, 3,1));
+                units.add(new Zombie(BLACK, 4,1));
+                units.add(new Zombie(BLACK, 5,1));
+                units.add(new Zombie(BLACK, 6,1));
+                units.add(new Zombie(BLACK, 7,1));
 
                 units.add(new Queen(BLACK, 0,0));
                 units.add(new Queen(BLACK, 7,0));

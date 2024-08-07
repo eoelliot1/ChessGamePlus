@@ -124,7 +124,6 @@ Handles all the updates per turn.
                             if(canPromote()) {
                                 promotion = true;
                             } else {
-                                infect = false;
                                 changePlayer();
                             }
                         }
@@ -192,7 +191,6 @@ Handles all the updates per turn.
                 //Infect the unit instead of simply removing it if it is infected.
                 if(isInfected(activeUnit) == true) {
                     //Infect the unit instead of simply removing it if it is infected.
-                    infect = true;
                     int c = activeUnit.pre_Column;
                     int r = activeUnit.pre_Row;
                     simUnits.add(new Zombie(activeUnit.colour, c ,r));
@@ -597,20 +595,10 @@ Handles all the updates per turn.
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 
                 } else {
-                        g2.setColor(Color.CYAN);
-                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                        g2.fillRect(activeUnit.column * Board.SQUARE_SIZE, activeUnit.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-
-                    if(infect) { //Show spawn position for new Zombie units...
-                        g2.setColor(Color.MAGENTA);
-                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                        g2.fillRect(activeUnit.pre_Column*Board.SQUARE_SIZE, activeUnit.pre_Row*Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-                        g2.setColor(Color.MAGENTA);
-                        g2.setFont(new Font("Book Antiqua", Font.PLAIN, 20));
-                        g2.drawString("INFECT UNIT???", 840, 700);
-                    }
+                    g2.setColor(Color.CYAN);
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                    g2.fillRect(activeUnit.column*Board.SQUARE_SIZE, activeUnit.row*Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
                 }
 
             }

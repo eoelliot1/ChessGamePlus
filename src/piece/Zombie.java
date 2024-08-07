@@ -6,9 +6,9 @@ public class Zombie extends Unit {
     public Zombie(int colour, int row, int column) {
         super(colour, row, column);
         if (colour == Game_Panel.WHITE) {
-            image = getImage("/Pieces/UnitImages/WhiteCoven(Zombie)");
+            image = getImage("/Pieces/w-king");
         } else {
-            image = getImage("/Pieces/UnitImages/WhiteCoven(Zombie)");
+            image = getImage("/Pieces/w-king");
         }
     }
 

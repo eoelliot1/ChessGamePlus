@@ -29,7 +29,6 @@ public class Queen extends Unit {
             //Diagonal movements:
             if(Math.abs(targetCol - pre_Column) == Math.abs(targetRow - pre_Row)) {
                 if (isValidSquare(targetCol, targetRow) && unitIsOnDiagonalLine(targetCol, targetRow) == false) {
-                    System.out.println("THE QUEEN HAS MOVED!!!");
                     return true;
                 }
             }

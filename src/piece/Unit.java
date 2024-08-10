@@ -129,6 +129,7 @@ public class Unit {
         return 0;
     }
 
+
     public boolean isValidSquare(int targetCol, int targetRow) {
 
         if((hittingUnit = getHittingU(targetCol, targetRow)) == null) {
@@ -148,6 +149,31 @@ public class Unit {
         return false;
     }
 
+    public boolean unitIsOnStraightUpDownLine(int targetCol, int targetRow) {
+
+        //When unit is moving Up
+        for(int r = pre_Row-1; r > targetRow; r--) {
+            for(Unit unit : Game_Panel.simUnits) { //Check gamePanel units to see if there are any units that could be on the up.
+                if(unit.row == r && unit.column == targetCol) { //True if the unit found is adjacently on the up to the current unit direction.
+                    hittingUnit = unit;
+                    return true;
+                }
+            }
+        }
+
+        //When unit is moving Down
+        for(int r = pre_Row+1; r < targetRow; r++) {
+            for(Unit unit : Game_Panel.simUnits) { //Check gamePanel units to see if there are any units that could be on the down.
+                if(unit.row == r && unit.column == targetCol) { //True if the unit found is adjacently on the down to the current unit direction.
+                    hittingUnit = unit;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+
+    }
     public boolean unitIsOnStraightLine(int targetCol, int targetRow) {
         //When unit is moving left
         for(int c = pre_Column-1; c > targetCol; c--) {

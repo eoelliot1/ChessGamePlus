@@ -13,7 +13,7 @@ public class LichKing extends Unit{
             image = getImage("/Pieces/UnitImages/WhiteCoven(LichKing)");
 
         } else {
-            image = getImage("/Pieces/UnitImages/WhiteCoven(LichKing)");
+            image = getImage("/Pieces/UnitImages/Drawing");
         }
 
     }

@@ -20,6 +20,8 @@ public class Game_Panel extends JPanel implements Runnable {
     public static ArrayList<Unit> units = new ArrayList<>();
     public static ArrayList<Unit> simUnits = new ArrayList<>();
     ArrayList<Unit> promoUnit = new ArrayList<Unit>();
+    ArrayList<Unit> summonUnit = new ArrayList<Unit>();
+    ArrayList<Necromancer> summonList = new ArrayList<Necromancer>();
     public static Unit castlingUnit;
     Unit activeUnit; //Stores what unit the player is holding.
     Unit checkingUnit;
@@ -28,13 +30,30 @@ public class Game_Panel extends JPanel implements Runnable {
     public static final int WHITE = 0;
     public static final int BLACK = 1;
     int currColour = WHITE;
-    int player1Region, player2Region;
+
+    /*
+    This is a number value that represents what region is being played.7
+    0 == None chosen
+    1 == Classic
+    2 == Coven
+     */
+    int whiteRegion, blackRegion; // 0 = Classic Region,
+
+    int maxSummonCount;
+    int summonCount = 0;
+
+    int whiteTurnCount = 0, blackTurnCount = 0;
+
+    int whiteLichLives = 7, blackLichLives = 7;
 
     // Boolean conditions...
     boolean infect = false;
+
+    boolean selfpunch = false;
     boolean canMove;
     boolean validSquare;
     boolean promotion;
+    boolean summon = false;
     boolean gameOver = false;
 
     boolean staleMate = false;
@@ -46,13 +65,10 @@ public class Game_Panel extends JPanel implements Runnable {
         addMouseMotionListener(mouse);
         addMouseListener(mouse);
 
-        /*
-        For now the game is called using the Classic format.
-        In future, we can create different types of game formats relating to the stage.
-         */
-
-
         //setUnitsClassic(); // - Old version
+
+        whiteRegion = player1;
+        blackRegion = player2;
         setUnitsRegional(player1, player2);
         copyUnits(units, simUnits);
     }
@@ -65,22 +81,83 @@ Handles all the updates per turn.
 */
     private void update() {
         //System.out.println(activeUnit); //BugFixing
+        //------------------------ THIS IMPELEMNTATION CONSIDERS DEAD NECROMANCERS BUT DOESN'T ITERATE THROUGH SIMULATION BEFORE COMMEINCING OTHER SUMMONS.
+        if(summon == true) {
+            for (int i = 0; i < simUnits.size(); i++) {
+                if (simUnits.get(i).getClass() == Necromancer.class && simUnits.get(i).colour == currColour) {
+//                    if(getLichKing(false) != null) {
+//                        necroSummoningv2((Necromancer) simUnits.get(i), true);
+//                        System.out.println("Summoning Lich King");
+//                    } else {
+//                        necroSummoningv2((Necromancer) simUnits.get(i), false);
+//                        System.out.println("Summoned");
+//                    }
+//
+                    //2nd Argument true if the player's lich king alive and false if otherwise.
+                    necroSummoningv2((Necromancer) simUnits.get(i), (getLichKing(false) != null));
+                }
+            }
+//            if(currColour == WHITE) {
+//                    whiteTurnCount++;
+//                } else {
+//                    blackTurnCount++;
+//            }
 
-        if(promotion) {
+//------------------------ THIS IMPELEMENTATION DOESN'T COUNT FOR WHEN NECROMANCERS DIES BUT IT ITERATES THROUGH SIMULATION THE CORRECT AMOUNT OF TIMES.
+
+//            if(summonCount >= maxSummonCount == true) {
+//                if(currColour == WHITE) {
+//                    whiteTurnCount++;
+//                } else {
+//                    blackTurnCount++;
+//                }
+//
+            // ------------------------ THIS IMPELEMENTATION is compuslory
+                summon = false;
+                System.out.println(summonCount);
+                System.out.println(summon);
+                summonCount = 0;
+                endTurn();
+                //changePlayer();
+                // ------------------------ THIS IMPELEMENTATION is compuslory
+//            } else {
+//                necroSummoningv2(summonList.get(summonCount));
+//                summonCount++;
+//            };
+//  ------------------------ THIS IMPELEMENTATION DOESN'T COUNT FOR WHEN NECROMANCERS DIES BUT IT ITERATES THROUGH SIMULATION THE CORRECT AMOUNT OF TIMES.
+
+//            //Record the max number of units that can be summon, this will determine how many times this section of the code gets run.
+//            //Find all the necromancers that can summon and add them to an ArrayList.
+//            for (int i = 0; i < simUnits.size(); i++) {
+//                if (simUnits.get(i).getClass() == Necromancer.class && simUnits.get(i).colour == currColour) {
+//                    summonList.add((Necromancer) simUnits.get(i));
+//                }
+//            }
+//
+//            summonCount++;
+//            int summonMaxCount = summonList.size();
+//            necroSummoningv2(summonList.get(summonCount));
+//
+//            if(summonCount == summonMaxCount) {//True if all Necro units have summoned.
+//                summon = false;
+//            }
+
+        } else if(promotion) {
             promoting();
+        }
 
-        } // YOU CAN ADD STUFF HERE IF U WANT IT TO PROCESS BEFORE THE SIMULATION PHASE STARTS. PROMOTION IS A GOOD EXAMPLE
-        else if(gameOver == false && staleMate == false) {
+        // YOU CAN ADD STUFF HERE IF U WANT IT TO PROCESS BEFORE THE SIMULATION PHASE STARTS. PROMOTION IS A GOOD EXAMPLE
+        else if (gameOver == false && staleMate == false) {
             //Mouse Button pressed
-            if(mouse.pressed) {
+            if (mouse.pressed) {
 
                 //True if player is not holding a unit
-                if(activeUnit == null) {
+                if (activeUnit == null) {
 
                     for (Unit unit : simUnits) {
                         //If the player's mouse has the same colour, same row and, same column then the player's mouse is on this piece.
-                        if(unit.colour == currColour &&
-                                unit.column == mouse.x/Board.SQUARE_SIZE && unit.row == mouse.y/Board.SQUARE_SIZE) {
+                        if (unit.colour == currColour &&
+                                unit.column == mouse.x / Board.SQUARE_SIZE && unit.row == mouse.y / Board.SQUARE_SIZE) {
                             activeUnit = unit;
                             System.out.println(activeUnit + "is selected to move.");
                         }
@@ -92,45 +169,54 @@ Handles all the updates per turn.
             }
 
             //IF MOUSE IS NOT BEING PRESSED.
-            if(!mouse.pressed) {
+            if (!mouse.pressed) {
 
                 //System.out.println("Mouse released");
-                if(activeUnit != null) {
+                if (activeUnit != null) {
 
 
-                    if(validSquare) { //It's a valid position so update the position.
-                        //Movement has been confirmed...
-                        System.out.println("URow: " + activeUnit.row + " UColumn: " + activeUnit.column);
-                        System.out.println("UPRow: " + activeUnit.pre_Row + " UPColumn: " + activeUnit.pre_Column);
-
+                    if (validSquare) { //It's a valid position so update the position.
 
                         copyUnits(simUnits, units); //If a piece has been removed then we apply to the backup list.
                         activeUnit.updatePosition();
+                        boolean endTheTurn = false; //End the turn if this boolean is true.
 
-                        if(castlingUnit != null) {
-                            castlingUnit.updatePosition();
+                        if (castlingUnit != null) {
+                                castlingUnit.updatePosition();
+                            }
+
+                        if (lichHasLives(currColour)) {
+
+                        } else {
+                            System.out.println(currColour + " has loss the fight!");
+                            gameOver = true;
                         }
-
 
                         if (isKingInCheck() && isCheckmate()) {
                             gameOver = true; //GG
                             System.out.println("GameOver");
-                        } else if (isStaleMate() && isKingInCheck() == false) {
-                            //True if its stalemate. King needs to be in check for stalemate
-
+                        } else if (isStaleMate() && isKingInCheck() == false) { //True if its stalemate. King needs to be in check for stalemate
                             staleMate = true;
-                        }
-                        else { //No gg
-                            if(canPromote()) {
+                        } else { //Not the end of the game
+                            if (canPromote()) {
                                 promotion = true;
+                            } else if (necroSummonTime()) {
+                                summon = true;
+
+                                //All the units that will summon next are stored in an array.
+                                if (summonList.size() == 0) { //True if the summonList is empty. we only need to run this once.
+                                    for (int i = 0; i < simUnits.size(); i++) {
+                                        if (simUnits.get(i).getClass() == Necromancer.class && simUnits.get(i).colour == currColour) {
+                                                summonList.add((Necromancer) simUnits.get(i));
+                                        }
+                                    }
+                                    maxSummonCount = summonList.size();
+                                }
                             } else {
-                                changePlayer();
+                                endTurn();
                             }
                         }
-                        //WRITE CODE OVER HERE TO DESELECT THE UNIT IN THE SIMULATION PHASE.........................................................................
 
-                        //activeUnit = null; //MY CODE: If u let go of your mouse when holding a unit, it will deselect unit.
-                        //CANCELLED(BECAUSE THIS BROKE PROMOTION. IF ENABLED THEN U MUST DISABLE THIS CODE AT THE CHANGEPLAYER PART.
                     } else { //It's not a valid position so reset the position
                         copyUnits(units, simUnits); //A piece has been moved but the changes will be reverted for the original list
                         activeUnit.resetPosition();
@@ -147,6 +233,7 @@ Handles all the updates per turn.
 
         }
     }
+
 
     /*
     - In turn based strategy games, they often have a waiting phase unlike real-time based strategy games.
@@ -191,18 +278,48 @@ Handles all the updates per turn.
                 //Infect the unit instead of simply removing it if it is infected.
                 if(isInfected(activeUnit) == true) {
                     //Infect the unit instead of simply removing it if it is infected.
+                    infect = true;
                     int c = activeUnit.pre_Column;
                     int r = activeUnit.pre_Row;
                     simUnits.add(new Zombie(activeUnit.colour, c ,r));
                 }
+
+                if(selfHit(activeUnit) == true) {
+                    //This unit will also hit itself
+                    System.out.println(activeUnit);
+                    selfpunch = true;
+                    simUnits.remove(activeUnit.getIndex());
+
+                }
+
             }
 
             checkCastling();
 
-            if(isIllegal(activeUnit) == false && opponentCanCaptureKing() == false) {
-                validSquare = true;
-            }
+                if(isIllegal(activeUnit) == false && opponentCanCaptureProtectedUnit() == false) {
+                    validSquare = true;
+                }
+
+
+
         }
+    }
+
+    /*
+        Runs all the code required to end the turn under normal circumstances.
+     */
+    private void endTurn() {
+        //Reset values
+        infect = false;
+        selfpunch = false;
+
+        //Update player Count
+        if (currColour == WHITE) {
+            whiteTurnCount++;
+        } else {
+            blackTurnCount++;
+        }
+        changePlayer();
     }
 
     /*
@@ -213,8 +330,20 @@ Handles all the updates per turn.
         if(infected.getClass() == Zombie.class) {
             return true;
         }
+        return false;
+    }
+
+    /*
+        Returns true if this type of unit also hits itself
+     */
+    private boolean selfHit(Unit unit) {
+
+        if(unit.getClass() == Skeleton.class) {
+            return true;
+        }
 
         return false;
+
     }
 
     private boolean isIllegal(Unit protectedUnit) { //We use Unit instead of king so other units can use it.
@@ -227,20 +356,33 @@ Handles all the updates per turn.
                  }
              }
          }
+        // TODO: Write line of code for LichKing so that it ignores protectedUnit Protection.
 
-         return false;
+         return false; //No King or possibly a lichKing.
     }
 
-    private boolean opponentCanCaptureKing() {
+    /*
+    Returns true on whether a protected unit can be captured.
+    However, if the unit is a Lich King then always return false since they are special units but aren't protected.
+     */
+    private boolean opponentCanCaptureProtectedUnit() {
         Unit King = getKing(false);
 
-        for(Unit unit : simUnits) {
-            if(unit.colour != King.colour && unit.canMove(King.column, King.row)) {
-                return true;
+        if(King != null) { //True if there is a King in the player's team.
+            for(Unit unit : simUnits) {
+                if(unit.colour != King.colour && unit.canMove(King.column, King.row)) {
+                    return true;
+                }
+            }
+            return false; //There is king but it can't be captured.
+        } else {
+            Unit LichKing = getLichKing(false);
+            if(LichKing != null) { //True if there is a Lich King
+                return false; // Lich King has no protection...
             }
         }
 
-        return false;
+        return false; //No protected units found
     }
 
     /*
@@ -249,17 +391,29 @@ Handles all the updates per turn.
     If the king is not in check, return false.
      */
     private boolean isKingInCheck() {
-        Unit King = getKing(true);
 
-        if(activeUnit.canMove(King.column, King.row)) {
-            checkingUnit = activeUnit;
-            return true;
-        } else {
-            checkingUnit = null;
+        //BASE CASE
+        if (currColour == 0) {
+            if(blackRegion == 2) {
+                return false; //Opponent has no King.
+            }
+        } else if (currColour == 1) {
+            if(whiteRegion == 2) {
+                return false; //Opponent has no King.
+            }
         }
 
-        return false;
-    }
+            Unit King = getKing(true);
+
+            if(activeUnit.canMove(King.column, King.row)) {
+                checkingUnit = activeUnit;
+                return true;
+            } else {
+                checkingUnit = null;
+            }
+
+            return false;//There is no king
+        }
 
     /*
         Finds the king in simulated pieces and returns it.
@@ -285,6 +439,28 @@ Handles all the updates per turn.
     }
 
 
+/*
+    Try see if you can write functionality for a universal method for all units. So u can put what unit u want as parameters
+ */
+    private Unit getLichKing(boolean opponent) {
+        Unit LichKing = null;
+
+        for(Unit unit : simUnits) {
+            if(opponent) {
+                if(unit.getClass() == LichKing.class && unit.colour != currColour) {
+                    LichKing = unit;
+                }
+            }
+            else {
+                if(unit.getClass() == LichKing.class && unit.colour == currColour) {
+                    LichKing = unit;
+                }
+            }
+        }
+        return LichKing;
+    }
+
+
     private void checkCastling() {
         if (castlingUnit != null) {
             if(castlingUnit.column == 0) { //True if Left Rook
@@ -297,6 +473,9 @@ Handles all the updates per turn.
     }
 
     private boolean isCheckmate() {
+        if(whiteRegion == 1 && currColour == 0 || blackRegion == 1 && currColour == 1) { //BASE CASE
+            return false; // There is no king
+        }
 
         Unit King25 = getKing(true);
 
@@ -558,11 +737,206 @@ Handles all the updates per turn.
                     copyUnits(simUnits, units);
                     activeUnit = null;
                     promotion = false;
-                    changePlayer();;
+                    changePlayer();
                 }
             }
         }
+    }
 
+    private void necroSummoningv2(Necromancer summoningUnit, boolean lichKingAlive) {
+            System.out.println(summoningUnit + " is summoning!");
+            boolean startSummon = true;
+
+
+            if(lichKingAlive == false) { //True if the lichKing is dead.
+                    if(summoningUnit.canSummon()) { //Emergency LichKing summon. The player has no choice.
+                        simUnits.add(new LichKing(currColour, summoningUnit.column, (summoningUnit.row + summoningUnit.summonDistance)));
+                        System.out.println("No LichKing found. Necromancer has revived the Lich King!!!");
+                    }
+            } else {
+
+                    boolean hasChosen = false;
+
+                    while(hasChosen == false) {
+                        if (summoningUnit.canSummon() == true) {
+
+                            if (mouse.pressed) {
+                                for (Unit summonedUnit : summonUnit) {
+                                    if (summonedUnit.column == mouse.x / Board.SQUARE_SIZE && summonedUnit.row == mouse.y / Board.SQUARE_SIZE) { //True if the mouse is in one of these pieces.
+
+                                        if (summonedUnit.getClass() == Skeleton.class) {
+                                            simUnits.add(new Skeleton(summonedUnit.colour, summoningUnit.column, (summoningUnit.row + summoningUnit.summonDistance)));
+                                            System.out.println("Necromancer has summoned Skeleton!");
+
+                                        } else if (summonedUnit.getClass() == Pawn.class) {
+                                            simUnits.add(new Pawn(summonedUnit.colour, summoningUnit.column, (summoningUnit.row + summoningUnit.summonDistance)));
+                                            System.out.println("Necromancer has summoned Pawn!");
+                                        }
+                                        hasChosen = true;
+                                    }
+                                }
+                            }
+                        } else {
+                            System.out.println(summoningUnit + " Has no space to summon");
+                            hasChosen = true;
+                        }
+                    }
+            }
+        copyUnits(simUnits, units);
+        activeUnit = null;
+    }
+
+    private void necroSummoning( ) {
+
+        //Get all the Necromancers
+        ArrayList<Necromancer> foundNecromancers = new ArrayList<Necromancer>();
+
+        for (int i = 0; i < simUnits.size(); i++) {
+            if (simUnits.get(i).getClass() == Necromancer.class && simUnits.get(i).colour == currColour) {
+                foundNecromancers.add((Necromancer) simUnits.get(i)); //CASTING since we know it must be a necromancer.
+            }
+        }
+
+        //Go through the list of foundNecromancers and activate summmoning
+
+        for (Necromancer unit : foundNecromancers) {
+            System.out.println(unit + " is summoning!");
+
+            if (currColour == WHITE && (unit.canSummon() == true)) {
+                if (mouse.pressed) {
+                    for (Unit summonedUnit : summonUnit) {
+                        if (summonedUnit.column == mouse.x / Board.SQUARE_SIZE && summonedUnit.row == mouse.y / Board.SQUARE_SIZE) { //True if the mouse is in one of these pieces.
+
+                            if (summonedUnit.getClass() == Skeleton.class) {
+                                simUnits.add(new Skeleton(currColour, unit.column, (unit.row + unit.summonDistance)));
+                                System.out.println("Necromancer has summoned Skeleton!");
+
+                            } else if (summonedUnit.getClass() == Pawn.class) {
+                                simUnits.add(new Pawn(currColour, unit.column, (unit.row + unit.summonDistance)));
+                                System.out.println("Necromancer has summoned Pawn!");
+                            }
+                            copyUnits(simUnits, units);
+                            activeUnit = null;
+                        }
+                    }
+                }
+            } else {
+                System.out.println(unit + " has no space to summon...");
+            }
+        }
+        //simUnits.remove(activeUnit.getIndex()); Dont think we need this
+        //copyUnits(simUnits, units);
+        activeUnit = null;
+        summon = false;
+        changePlayer();
+    }
+
+    /*/
+        Returns a list of all the playable necromancer units that are ready for summoning.
+     */
+    private ArrayList<Necromancer> getNecromancers() {
+        ArrayList<Necromancer> foundNecromancers = new ArrayList<Necromancer>();
+        //boolean containsNecromancers = false;
+
+//        for (Unit unit : simUnits) {
+//            if (unit.getClass() == Necromancer.class && unit.colour == currColour) {
+//                foundNecromancers.add(unit);
+//                }
+//            }
+
+        for (int i = 0; i < simUnits.size(); i++) {
+            if (simUnits.get(i).getClass() == Necromancer.class) {
+                foundNecromancers.add((Necromancer) simUnits.get(i)); //CASTING since we know it must be a necromancer.
+            }
+        }
+        return foundNecromancers;
+    }
+
+    /*
+        Checks if the current player can summon Necromancers on this turn.
+        Base case: this method will automatically return false if there are no necromancers.
+     */
+    private boolean necroSummonTime() {
+        int turncount;
+        int summonTime = 6;
+
+        if(currColour == WHITE) { //TRUE IF WHITE SUMMONING, FALSE IS BLACK
+            turncount = whiteTurnCount;
+        } else {
+            turncount = blackTurnCount;
+        }
+
+        if(turncount % summonTime == 0 && turncount != 0) {//So every "summonTime" turns, summoning will commence.
+            System.out.println("SUMMONING IS SUPPOSED TO COMMENCE?:     " + (turncount % summonTime));
+
+            summonUnit.clear();
+            summonUnit.add(new Skeleton(currColour, 9,2));
+            summonUnit.add(new Pawn(currColour, 9,3));
+
+            boolean necromancerExist = false;
+
+            //Check if there is any necromancers with the same colour.
+            for(int i = 0; i < simUnits.size(); i++) {
+                if(simUnits.get(i).getClass() == Necromancer.class && simUnits.get(i).colour == currColour) {
+
+                    necromancerExist = true;
+                }
+            }
+            if (necromancerExist && whiteTurnCount >= summonTime || necromancerExist && blackTurnCount >= summonTime) { //Check to see if time is right for that turn
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /*
+        Checks if the Lich king for the corresponding colour is alive.
+        If the Lich King is dead, then reduce the liveCount by 1.
+        If the Lives count reaches 0, then return false. The game is over.
+        If there still are lives then return true;
+     */
+    private boolean lichHasLives(int Colour) {
+
+        if(Colour == WHITE) {
+            if(whiteRegion == 2) { //True if white region is playing Coven region
+                if (getLichKing(false) == null) { //True if you don't have a lichKing
+                    if(whiteLichLives <= 0) {
+
+                        System.out.print(" Furthermore " + currColour + " has no lives!");
+                        return false; //WHITE LICH IS OUT OF LIVES. GAMEOVER!!
+                    } else {
+
+                        System.out.print("However, " + currColour + " still has lives!");
+                        whiteLichLives--;
+                        return true; //WHITE LICH STILL HAS LIVES.
+                    }
+                } else {
+                    System.out.println("White lich king still lives No lives has been taken");
+                    return true;
+                }
+            }
+        } else if (Colour == BLACK) {
+            if(blackRegion == 2) { //True if black region is playing Coven region
+                if (getLichKing(false) == null) { //True if you don't have a lichKing
+
+                    System.out.println(Colour + " is dead.");
+                    if(blackLichLives <= 0) {
+
+                        System.out.print(" Furthermore " + currColour + " has no lives!");
+                        return false; //BLACK LICH IS OUT OF LIVES. GAMEOVER!!
+                    } else {
+
+                        System.out.print("However, " + currColour + " still has lives!");
+                        blackLichLives--;
+                        return true; //BLACK LICH STILL HAS LIVES.
+                    }
+                } else {
+                    System.out.println("Black LichKing still lives! No lives has been taken");
+                    return true;
+                }
+            }
+        }
+        return true;
     }
 
 
@@ -584,23 +958,93 @@ Handles all the updates per turn.
             p.draw(g2);
         }
 
+        //Drawing turn count.
+        g2.setFont(new Font("Book Antiqua", Font.PLAIN, 40));
+        g2.drawString(String.valueOf(whiteTurnCount), 900, 50);
+        g2.drawString(String.valueOf(blackTurnCount), 900, 100);
+
+        //COVEN UNIT PROPERTIES
+        if (whiteRegion == 2) {
+            g2.setColor(Color.WHITE);
+            g2.setFont(new Font("Book Antiqua", Font.PLAIN, 40));
+            g2.drawString(String.valueOf(whiteLichLives), 800, 750);
+        }
+
+        //COVEN UNIT PROPERTIES
+        if (blackRegion == 2) {
+            g2.setColor(Color.GREEN);
+            g2.setFont(new Font("Book Antiqua", Font.PLAIN, 40));
+            g2.drawString(String.valueOf(blackLichLives), 900, 750);
+
+            int summonCommenceCountdown = 6 - (blackTurnCount % 6);
+
+            //g2.drawString(String.valueOf(summonCommenceCountdown+1), 900, 800);
+        }
+
         //This is responsible for colouring the piece u want to move the piece to.
         if(activeUnit != null) {
+
+//            for(int row = 0; row < 8; row++) { //idk this doesn't work
+//                for (int colum = 0; colum < 8; colum++) {
+//                    if(activeUnit.canMove(row, colum)) {
+//                        g2.setColor(Color.green);
+//                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+//                        g2.fillRect(colum*Board.SQUARE_SIZE, row*Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+//                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+//
+//                        //g2.fillRect(activeUnit.column*Board.SQUARE_SIZE, activeUnit.row*Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+//                    }
+//                }
+//            }
+
             if(canMove) {
 
-                if(isIllegal(activeUnit) || opponentCanCaptureKing()) {
+                if(isIllegal(activeUnit) || opponentCanCaptureProtectedUnit()) {
                     g2.setColor(Color.red);
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
                     g2.fillRect(activeUnit.column*Board.SQUARE_SIZE, activeUnit.row*Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
                     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 
                 } else {
-                    g2.setColor(Color.CYAN);
-                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
-                    g2.fillRect(activeUnit.column*Board.SQUARE_SIZE, activeUnit.row*Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
-                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+                        g2.setColor(Color.CYAN);
+                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                        g2.fillRect(activeUnit.column * Board.SQUARE_SIZE, activeUnit.row * Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+
+                    if(infect) { //Show spawn position for new Zombie units...
+                        g2.setColor(Color.MAGENTA);
+                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                        g2.fillRect(activeUnit.pre_Column*Board.SQUARE_SIZE, activeUnit.pre_Row*Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+                        g2.setColor(Color.MAGENTA);
+                        g2.setFont(new Font("Book Antiqua", Font.PLAIN, 20));
+                        g2.drawString("INFECT UNIT???", 840, 700);
+                    }
+
+                    if(summon) { //Show spawn position for new Zombie units...
+                        g2.setColor(Color.MAGENTA);
+                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                        g2.setFont(new Font("Book Antiqua", Font.PLAIN, 20));
+                        g2.drawString("Summoning commence???", 900, 640);
+                    }
+
+                    if(selfpunch) {
+                        g2.setColor(Color.RED);
+                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                        g2.fillRect(activeUnit.pre_Column*Board.SQUARE_SIZE, activeUnit.pre_Row*Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+                        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+                        g2.setColor(Color.RED);
+                        g2.setFont(new Font("Book Antiqua", Font.PLAIN, 20));
+                        g2.drawString("WARNING!!! THIS WILL", 840, 300);
+                        g2.drawString("DESTROY ACTIVE UNIT", 840, 500);
+                    }
                 }
 
+            } else {
+                g2.setColor(Color.red);
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+                g2.fillRect(activeUnit.column*Board.SQUARE_SIZE, activeUnit.row*Board.SQUARE_SIZE, Board.SQUARE_SIZE, Board.SQUARE_SIZE);
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
             }
 
             //Draw the active piece in the end so it wont be hidden by the board or coloured square.
@@ -617,8 +1061,17 @@ Handles all the updates per turn.
             for (Unit unit : promoUnit) { //Scan promoUnit list and draw the image 1 by 1.
                 g2.drawImage(unit.image, unit.getX(unit.column), unit.getY(unit.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE, null);
             }
-        } else {
+        } else if(summon) {
+            g2.drawString("Summon:,", 840, 1);
+            for (Unit unit : summonUnit) { //Scan promoUnit list and draw the image 1 by 1.
+                g2.drawImage(unit.image, unit.getX(unit.column), unit.getY(unit.row), Board.SQUARE_SIZE, Board.SQUARE_SIZE, null);
+            }
+        }
+
+        else {
             if(currColour == WHITE) {
+
+                //Universal white functionality:
                 g2.drawString("Player White's turn", 840, 550);
 
                 if(checkingUnit != null && checkingUnit.colour == BLACK) {
@@ -628,6 +1081,7 @@ Handles all the updates per turn.
                 }
 
                 g2.setColor(Color.WHITE);
+
             } else {
                 g2.fillOval(800, 2000, 30, 200);
                 g2.drawString("Player Black's turn", 840, 250);
@@ -702,27 +1156,30 @@ Handles all the updates per turn.
 
             case 2:
                 //Team White Coven
-                units.add(new Zombie(WHITE, 0,6));
+//                units.add(new Skeleton(WHITE, 0,6));
                 units.add(new Zombie(WHITE, 1,6));
                 units.add(new Zombie(WHITE, 2,6));
                 units.add(new Zombie(WHITE, 3,6));
                 units.add(new Zombie(WHITE, 4,6));
                 units.add(new Zombie(WHITE, 5,6));
                 units.add(new Zombie(WHITE, 6,6));
-                units.add(new Zombie(WHITE, 7,6));
+//                units.add(new Skeleton(WHITE, 7,6));
 
-                units.add(new Queen(WHITE, 0,7));
-                units.add(new Queen(WHITE, 7,7));
+                units.add(new Necromancer(WHITE, 0,7));
+                units.add(new Necromancer(WHITE, 7,7));
 
-                units.add(new Queen(WHITE, 1,7));
-                units.add(new Queen(WHITE, 6,7));
 
-                units.add(new Queen(WHITE, 2,7));
-                units.add(new Queen(WHITE, 5,7));
+                units.add(new Knight(WHITE, 1,7));
+                units.add(new Knight(WHITE, 6,7));
+
+                units.add(new Knight(WHITE, 2,7));
+                units.add(new Knight(WHITE, 5,7));
 
                 units.add(new Queen(WHITE, 3,7));
 
-                units.add(new King(WHITE, 4,7));
+//                units.add(new LichKing(WHITE, 4,7));
+                //Team WHITE Coven (TEST)
+                units.add(new LichKing(WHITE, 4,7));
 
         }
 
@@ -755,37 +1212,31 @@ Handles all the updates per turn.
 
             case 2:
                 //Team Black Coven
-                units.add(new Zombie(BLACK, 0,1));
+//                units.add(new Skeleton(BLACK, 0,1));
                 units.add(new Zombie(BLACK, 1,1));
                 units.add(new Zombie(BLACK, 2,1));
                 units.add(new Zombie(BLACK, 3,1));
                 units.add(new Zombie(BLACK, 4,1));
                 units.add(new Zombie(BLACK, 5,1));
                 units.add(new Zombie(BLACK, 6,1));
-                units.add(new Zombie(BLACK, 7,1));
+//                units.add(new Skeleton(BLACK, 7,1));
 
-                units.add(new Queen(BLACK, 0,0));
-                units.add(new Queen(BLACK, 7,0));
-
-                units.add(new Queen(BLACK, 1,0));
-                units.add(new Queen(BLACK, 6,0));
-
-                units.add(new Queen(BLACK, 2,0));
-                units.add(new Queen(BLACK, 5,0));
-
-                units.add(new Queen(BLACK, 3,0));
+                units.add(new Necromancer(BLACK, 0,0));
+                units.add(new Necromancer(BLACK, 7,0));
 
 
-                units.add(new King(BLACK, 4,0));
+                units.add(new Knight(BLACK, 1,0));
+                units.add(new Knight(BLACK, 6,0));
 
+                units.add(new Knight(BLACK, 2,0));
+                units.add(new Knight(BLACK, 5,0));
 
                 units.add(new Knight(BLACK, 3,0));
 //
-                units.add(new LichKing(BLACK, 4,0));
+//                units.add(new LichKing(BLACK, 4,0));
 
                 //Team Black Coven (TEST)
-                //units.add(new LichKing(BLACK, 4,7));
-
+                units.add(new LichKing(BLACK, 4,7));
         }
     }
     public void setUnitsClassic() {

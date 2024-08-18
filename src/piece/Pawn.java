@@ -12,9 +12,6 @@ public class Pawn extends Unit {
         }
     }
 
-    //Can't we just create a 1 turn movement boolean here?
-    //If it moves once then we just turn the Boolean to false.
-
     public boolean canMove (int targetCol, int targetRow) {
 
         if(isWithinBoard(targetCol, targetRow) && isSameSquare(targetCol, targetRow) == false) {

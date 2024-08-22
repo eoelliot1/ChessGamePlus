@@ -9,7 +9,7 @@ public class Queen extends Unit {
             image = getImage("/Pieces/UnitImages/WhiteClassic(Queen)");
 
         } else {
-            image = getImage("/Pieces/b-queen");
+            image = getImage("/Pieces/UnitImages/BlackClassic(Queen)");
         }
     }
 

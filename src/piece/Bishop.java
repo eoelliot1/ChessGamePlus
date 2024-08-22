@@ -9,7 +9,7 @@ public class Bishop extends Unit {
             image = getImage("/Pieces/UnitImages/WhiteClassic(Bishop)");
 
         } else {
-            image = getImage("/Pieces/b-bishop");
+            image = getImage("/Pieces/UnitImages/BlackClassic(Bishop)");
         }
     }
 

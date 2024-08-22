@@ -11,7 +11,7 @@ public class Rook extends Unit{
             image = getImage("/Pieces/UnitImages/WhiteClassic(Rook)");
 
         } else {
-            image = getImage("/Pieces/b-rook");
+            image = getImage("/Pieces/UnitImages/BlackClassic(Rook)");
         }
 
 

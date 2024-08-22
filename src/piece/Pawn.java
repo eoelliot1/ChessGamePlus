@@ -8,7 +8,7 @@ public class Pawn extends Unit {
         if (colour == Game_Panel.WHITE) {
             image = getImage("/Pieces/UnitImages/WhiteClassic(Pawn)");
         } else {
-            image = getImage("/Pieces/b-pawn");
+            image = getImage("/Pieces/UnitImages/BlackClassic(Pawn)");
         }
     }
 

@@ -9,7 +9,7 @@ public class King extends Unit{
             image = getImage("/Pieces/UnitImages/WhiteClassic(King)");
 
         } else {
-            image = getImage("/Pieces/b-king");
+            image = getImage("/Pieces/UnitImages/BlackClassic(King)");
         }
     }
 

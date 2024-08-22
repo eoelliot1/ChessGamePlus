@@ -1233,10 +1233,10 @@ Handles all the updates per turn.
 
                 units.add(new Knight(BLACK, 3,0));
 //
-//                units.add(new LichKing(BLACK, 4,0));
+                units.add(new LichKing(BLACK, 4,0));
 
                 //Team Black Coven (TEST)
-                units.add(new LichKing(BLACK, 4,7));
+                //units.add(new LichKing(BLACK, 4,7));
         }
     }
     public void setUnitsClassic() {

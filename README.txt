@@ -9,9 +9,12 @@
 4. All the features of orriginal chess.
 
 ## Current sets
-1. CLASSIC: This is the Classical chess set, with all its corresponding rules like promotions, en passant, etc.
+1. **CLASSIC:** This is the Classical chess set, with all its corresponding rules like promotions, en passant, etc.
 Units: 
 Pawn - Classical Pawn rules.
+<p>
+<img src="./res/Pieces/UnitImages/WhiteClassic(Pawn).jpeg" width="200">
+</p>
 
 Rook - Classical Rook rules.
 
